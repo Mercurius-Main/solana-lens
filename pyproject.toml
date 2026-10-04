@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solana-lens"
+version = "0.1.0"
+description = "A tiny, dependency-free CLI to inspect Solana chain data (balances, transaction history) and render it as markdown."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Mercurius" }]
+keywords = ["solana", "cli", "blockchain", "rpc", "markdown"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+solana-lens = "solana_lens.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["solana_lens*"]
