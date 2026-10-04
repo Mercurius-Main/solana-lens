@@ -5,6 +5,7 @@ import urllib.request
 
 DEFAULT_RPC = "https://api.mainnet-beta.solana.com"
 LAMPORTS_PER_SOL = 1_000_000_000
+TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 
 
 class SolanaRPCError(Exception):
@@ -42,6 +43,14 @@ class SolanaRPC:
 
     def get_transaction(self, signature):
         return self._call("getTransaction", [signature, {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}])
+
+    def get_token_accounts(self, address, program_id=TOKEN_PROGRAM_ID):
+        result = self._call("getTokenAccountsByOwner", [
+            address,
+            {"programId": program_id},
+            {"encoding": "jsonParsed"},
+        ])
+        return result["value"]
 
     def get_version(self):
         return self._call("getVersion", [])

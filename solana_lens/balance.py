@@ -11,3 +11,25 @@ def format_sol(lamports):
     """Format lamports as a trimmed, human-readable SOL amount."""
     sol = lamports_to_sol(lamports)
     return f"{sol:.9f}".rstrip("0").rstrip(".")
+
+
+def parse_token_balances(token_accounts):
+    """Extract mint + amount from jsonParsed getTokenAccountsByOwner output."""
+    balances = []
+    for ta in token_accounts:
+        info = ta.get("account", {}).get("data", {}).get("parsed", {}).get("info", {})
+        mint = info.get("mint")
+        token_amount = info.get("tokenAmount") or {}
+        ui_amount = token_amount.get("uiAmountString")
+        if mint and ui_amount is not None:
+            try:
+                if float(ui_amount) <= 0:
+                    continue
+            except (TypeError, ValueError):
+                pass
+            balances.append({
+                "mint": mint,
+                "amount": ui_amount,
+                "decimals": token_amount.get("decimals"),
+            })
+    return balances

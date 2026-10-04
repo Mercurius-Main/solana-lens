@@ -5,7 +5,7 @@ import argparse
 import sys
 
 from .rpc import SolanaRPC, DEFAULT_RPC
-from .balance import format_sol
+from .balance import format_sol, parse_token_balances
 from .history import history_rows, to_markdown
 
 DONATE_ADDRESS = "HXq1DKLWi6QszNRK8BCLRVBaPK92QmcXSrJJ44ZfatCZ"
@@ -16,6 +16,14 @@ def cmd_balance(args):
     lamports = rpc.get_balance_lamports(args.address)
     print(f"Address: {args.address}")
     print(f"SOL balance: {format_sol(lamports)} SOL")
+    token_accounts = rpc.get_token_accounts(args.address)
+    tokens = parse_token_balances(token_accounts)
+    if tokens:
+        print("SPL tokens:")
+        for t in tokens:
+            print(f"  {t['amount']} (mint {t['mint']})")
+    else:
+        print("SPL tokens: none")
 
 
 def cmd_history(args):
