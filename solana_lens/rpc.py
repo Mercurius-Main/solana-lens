@@ -44,6 +44,23 @@ class SolanaRPC:
     def get_transaction(self, signature):
         return self._call("getTransaction", [signature, {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}])
 
+    def get_transactions(self, address, limit=10):
+        """Fetch the address's most recent parsed transactions.
+
+        Skips any signature whose transaction can't be fetched (e.g. skipped
+        slots, transient RPC errors) rather than failing the whole batch.
+        """
+        sigs = self.get_signatures(address, limit=limit)
+        txs = []
+        for s in sigs:
+            try:
+                tx = self.get_transaction(s["signature"])
+            except (SolanaRPCError, KeyError, OSError):
+                continue
+            if tx:
+                txs.append(tx)
+        return txs
+
     def get_token_accounts(self, address, program_id=TOKEN_PROGRAM_ID):
         result = self._call("getTokenAccountsByOwner", [
             address,

@@ -24,6 +24,9 @@ solana-lens history <address> -n 20
 # Show transfers inside a single transaction
 solana-lens transaction <signature>
 
+# Summarise which programs an address interacts with
+solana-lens activity <address> -n 20
+
 # Point at a different RPC endpoint
 solana-lens --rpc https://your.rpc/ balance <address>
 

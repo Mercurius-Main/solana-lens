@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from solana_lens.history import format_timestamp, short_signature, history_rows, to_markdown, parse_transfers
+from solana_lens.history import format_timestamp, short_signature, history_rows, to_markdown, parse_transfers, parse_program_activity, program_name
 
 
 class TestHistory(unittest.TestCase):
@@ -63,6 +63,27 @@ class TestHistory(unittest.TestCase):
             {"parsed": {"type": "setAuthority", "info": {}}},
         ]}}}
         self.assertEqual(parse_transfers(tx), [])
+
+    def test_program_name_known_and_unknown(self):
+        self.assertEqual(program_name("11111111111111111111111111111111"), "System (SOL transfer)")
+        unknown = "UnknownProgramId123456789"
+        self.assertEqual(program_name(unknown), unknown)
+
+    def test_parse_program_activity_counts_and_dedupes(self):
+        txs = [
+            {"transaction": {"message": {"instructions": [
+                {"programId": "11111111111111111111111111111111"},
+                {"programId": "11111111111111111111111111111111"},  # dup in same tx
+                {"programId": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"},
+            ]}}},
+            {"transaction": {"message": {"instructions": [
+                {"programId": "11111111111111111111111111111111"},
+            ]}}},
+            {"transaction": {"message": {"instructions": []}}},
+        ]
+        activity = parse_program_activity(txs)
+        self.assertEqual(activity[0], ("11111111111111111111111111111111", 2))
+        self.assertEqual(activity[1], ("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8", 1))
 
 
 if __name__ == "__main__":

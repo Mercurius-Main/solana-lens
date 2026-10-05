@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Transaction-history parsing and markdown formatting."""
+from collections import Counter
 from datetime import datetime, timezone
 
 from .balance import lamports_to_sol
@@ -68,3 +69,45 @@ def parse_transfers(tx):
                 "token": info.get("mint"),
             })
     return transfers
+
+
+PROGRAM_NAMES = {
+    "11111111111111111111111111111111": "System (SOL transfer)",
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA": "SPL Token",
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL": "Associated Token",
+    "ComputeBudget111111111111111111111111111111": "Compute Budget",
+    "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8": "Raydium AMM",
+    "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4": "Jupiter",
+    "M2mx93ekt1fmXSVkTrUL9xVFHkmME8HTUi5Cyc5aF7K": "Magic Eden",
+    "METAewfxy7bgHprWBokRxSaLz7zZxvXFVdNaX6pWjK5": "Metaplex",
+    "cysPXAjehMpVXLapTavcH9WkUcs2uqDsdf6WjTYDNrZ": "Raydium CPMM",
+    "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK": "Raydium CLMM",
+    "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc": "Orca Whirlpool",
+    "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP": "Orca",
+    "JUP2jxvXaqu7NQY1GmNF4m1vodw12LVXYxbFLiJvo1Em": "Jupiter DCA",
+    "PhoeNiXZ8ByJGLkxNfZRnkUfjvmuYqLR89jjFHGqdXY": "Phoenix",
+    "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr": "Memo",
+}
+
+
+def program_name(program_id):
+    """Return a friendly name for a known program id, else the raw id."""
+    return PROGRAM_NAMES.get(program_id, program_id)
+
+
+def parse_program_activity(txs):
+    """Summarise which programs an address interacts with most.
+
+    Expects a list of jsonParsed getTransaction results. Returns a list of
+    (program_id, count) sorted by count desc.
+    """
+    counter = Counter()
+    for tx in txs:
+        msg = (tx.get("transaction") or {}).get("message") or {}
+        seen = set()
+        for inst in msg.get("instructions") or []:
+            pid = inst.get("programId")
+            if pid and pid not in seen:
+                counter[pid] += 1
+                seen.add(pid)
+    return counter.most_common()

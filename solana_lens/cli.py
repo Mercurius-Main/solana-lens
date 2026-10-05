@@ -6,7 +6,7 @@ import sys
 
 from .rpc import SolanaRPC, DEFAULT_RPC
 from .balance import format_sol, parse_token_balances, token_name
-from .history import history_rows, to_markdown, parse_transfers
+from .history import history_rows, to_markdown, parse_transfers, parse_program_activity, program_name
 
 DONATE_ADDRESS = "HXq1DKLWi6QszNRK8BCLRVBaPK92QmcXSrJJ44ZfatCZ"
 
@@ -60,6 +60,20 @@ def cmd_transaction(args):
             print(f"  {src} -> {dst}  {t['amount']} {token_name(t['token'])}")
 
 
+def cmd_activity(args):
+    rpc = SolanaRPC(args.rpc)
+    txs = rpc.get_transactions(args.address, limit=args.limit)
+    if not txs:
+        print("No recent transactions found.")
+        return
+    activity = parse_program_activity(txs)
+    total = len(txs)
+    print(f"Program activity for {args.address} (last {total} tx):")
+    for pid, count in activity:
+        pct = count / total * 100
+        print(f"  {program_name(pid)}: {count} ({pct:.0f}%)")
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog="solana-lens", description="Tiny Solana chain-data CLI.")
     p.add_argument("--rpc", default=DEFAULT_RPC, help="Solana JSON-RPC endpoint")
@@ -80,6 +94,11 @@ def build_parser():
     t = sub.add_parser("transaction", help="Show transfers inside a transaction")
     t.add_argument("signature")
     t.set_defaults(func=cmd_transaction)
+
+    a = sub.add_parser("activity", help="Summarise the programs an address interacts with")
+    a.add_argument("address")
+    a.add_argument("-n", "--limit", type=int, default=20)
+    a.set_defaults(func=cmd_activity)
 
     return p
 
