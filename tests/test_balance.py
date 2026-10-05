@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from solana_lens.balance import lamports_to_sol, format_sol, parse_token_balances
+from solana_lens.balance import lamports_to_sol, format_sol, parse_token_balances, token_name
 
 
 class TestBalance(unittest.TestCase):
@@ -37,6 +37,14 @@ class TestBalance(unittest.TestCase):
             {"account": {"data": {"parsed": {"info": {}}}}},
         ]
         self.assertEqual(parse_token_balances(accounts), [])
+
+    def test_token_name_known_mint(self):
+        self.assertEqual(token_name("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"), "USDC")
+        self.assertEqual(token_name("So11111111111111111111111111111111111111112"), "wSOL")
+
+    def test_token_name_unknown_mint_falls_back(self):
+        mint = "UnknownMintAddress123456789"
+        self.assertEqual(token_name(mint), mint)
 
 
 if __name__ == "__main__":

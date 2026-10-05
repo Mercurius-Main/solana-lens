@@ -13,6 +13,24 @@ def format_sol(lamports):
     return f"{sol:.9f}".rstrip("0").rstrip(".")
 
 
+# Well-known SPL token mints -> human-readable symbol.
+TOKEN_NAMES = {
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": "USDC",
+    "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB": "USDT",
+    "So11111111111111111111111111111111111111112": "wSOL",
+    "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN": "JUP",
+    "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7bBpESmr": "BONK",
+    "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3": "PYTH",
+    "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo": "WIF",
+    "6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN": "WEN",
+}
+
+
+def token_name(mint):
+    """Return a friendly symbol for a known mint, else the mint address."""
+    return TOKEN_NAMES.get(mint, mint)
+
+
 def parse_token_balances(token_accounts):
     """Extract mint + amount from jsonParsed getTokenAccountsByOwner output."""
     balances = []
