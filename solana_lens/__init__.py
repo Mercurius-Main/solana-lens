@@ -2,11 +2,12 @@
 """solana-lens: a tiny, dependency-free Solana chain-data CLI."""
 from .rpc import SolanaRPC, SolanaRPCError, LAMPORTS_PER_SOL, DEFAULT_RPC, TOKEN_PROGRAM_ID
 from .balance import lamports_to_sol, format_sol, parse_token_balances, token_name, TOKEN_NAMES
-from .history import history_rows, to_markdown, format_timestamp
+from .history import history_rows, to_markdown, format_timestamp, parse_transfers
 
 __all__ = [
     "SolanaRPC", "SolanaRPCError", "LAMPORTS_PER_SOL", "DEFAULT_RPC",
     "TOKEN_PROGRAM_ID", "lamports_to_sol", "format_sol", "parse_token_balances",
     "token_name", "TOKEN_NAMES", "history_rows", "to_markdown", "format_timestamp",
+    "parse_transfers",
 ]
-__version__ = "0.3.0"
+__version__ = "0.4.0"

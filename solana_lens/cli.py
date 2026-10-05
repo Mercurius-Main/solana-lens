@@ -6,7 +6,7 @@ import sys
 
 from .rpc import SolanaRPC, DEFAULT_RPC
 from .balance import format_sol, parse_token_balances, token_name
-from .history import history_rows, to_markdown
+from .history import history_rows, to_markdown, parse_transfers
 
 DONATE_ADDRESS = "HXq1DKLWi6QszNRK8BCLRVBaPK92QmcXSrJJ44ZfatCZ"
 
@@ -41,6 +41,25 @@ def cmd_donate(args):
     print(f"Support development by sending SOL/SPL USDC to:\n  {DONATE_ADDRESS}")
 
 
+def cmd_transaction(args):
+    rpc = SolanaRPC(args.rpc)
+    tx = rpc.get_transaction(args.signature)
+    if tx is None:
+        print("Transaction not found.")
+        return
+    transfers = parse_transfers(tx)
+    if not transfers:
+        print("No SOL/SPL transfers found in this transaction.")
+        return
+    for t in transfers:
+        src = (t["source"] or "")[:10]
+        dst = (t["destination"] or "")[:10]
+        if t["kind"] == "SOL":
+            print(f"  {src} -> {dst}  {t['amount']} SOL")
+        else:
+            print(f"  {src} -> {dst}  {t['amount']} {token_name(t['token'])}")
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog="solana-lens", description="Tiny Solana chain-data CLI.")
     p.add_argument("--rpc", default=DEFAULT_RPC, help="Solana JSON-RPC endpoint")
@@ -57,6 +76,10 @@ def build_parser():
 
     d = sub.add_parser("donate", help="Show the donation address")
     d.set_defaults(func=cmd_donate)
+
+    t = sub.add_parser("transaction", help="Show transfers inside a transaction")
+    t.add_argument("signature")
+    t.set_defaults(func=cmd_transaction)
 
     return p
 

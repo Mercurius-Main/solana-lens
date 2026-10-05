@@ -2,6 +2,8 @@
 """Transaction-history parsing and markdown formatting."""
 from datetime import datetime, timezone
 
+from .balance import lamports_to_sol
+
 
 def format_timestamp(block_time):
     """Render a Solana blockTime (unix seconds) as UTC, or 'unknown'."""
@@ -38,3 +40,31 @@ def to_markdown(rows):
             f"| `{short_signature(r['signature'])}` | {format_timestamp(r['block_time'])} "
             f"| {r['status']} | {memo} |")
     return "\n".join(lines)
+
+
+def parse_transfers(tx):
+    """Extract SOL and SPL transfers from a jsonParsed getTransaction result."""
+    transfers = []
+    msg = (tx.get("transaction") or {}).get("message") or {}
+    for inst in msg.get("instructions") or []:
+        parsed = inst.get("parsed") or {}
+        typ = parsed.get("type")
+        info = parsed.get("info") or {}
+        if typ == "transfer":
+            transfers.append({
+                "kind": "SOL",
+                "source": info.get("source"),
+                "destination": info.get("destination"),
+                "amount": lamports_to_sol(info.get("lamports", 0)),
+                "token": "SOL",
+            })
+        elif typ == "transferChecked":
+            ta = info.get("tokenAmount") or {}
+            transfers.append({
+                "kind": "SPL",
+                "source": info.get("source"),
+                "destination": info.get("destination"),
+                "amount": ta.get("uiAmountString"),
+                "token": info.get("mint"),
+            })
+    return transfers

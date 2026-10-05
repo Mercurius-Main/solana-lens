@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from solana_lens.history import format_timestamp, short_signature, history_rows, to_markdown
+from solana_lens.history import format_timestamp, short_signature, history_rows, to_markdown, parse_transfers
 
 
 class TestHistory(unittest.TestCase):
@@ -39,6 +39,30 @@ class TestHistory(unittest.TestCase):
         rows = [{"signature": "abc", "block_time": None, "status": "success", "memo": "a|b"}]
         md = to_markdown(rows)
         self.assertIn("a\\|b", md)
+
+    def test_parse_transfers_sol_and_spl(self):
+        tx = {"transaction": {"message": {"instructions": [
+            {"parsed": {"type": "transfer", "info": {
+                "source": "SrcAddr", "destination": "DstAddr", "lamports": 500_000_000}}},
+            {"parsed": {"type": "transferChecked", "info": {
+                "source": "SrcAddr", "destination": "DstAddr",
+                "tokenAmount": {"uiAmountString": "12.5"},
+                "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}}},
+            {"parsed": {"type": "advanceNonce", "info": {}}},
+        ]}}}
+        transfers = parse_transfers(tx)
+        self.assertEqual(len(transfers), 2)
+        self.assertEqual(transfers[0]["kind"], "SOL")
+        self.assertEqual(transfers[0]["amount"], 0.5)
+        self.assertEqual(transfers[1]["kind"], "SPL")
+        self.assertEqual(transfers[1]["amount"], "12.5")
+        self.assertEqual(transfers[1]["token"], "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
+
+    def test_parse_transfers_ignores_non_transfer(self):
+        tx = {"transaction": {"message": {"instructions": [
+            {"parsed": {"type": "setAuthority", "info": {}}},
+        ]}}}
+        self.assertEqual(parse_transfers(tx), [])
 
 
 if __name__ == "__main__":
